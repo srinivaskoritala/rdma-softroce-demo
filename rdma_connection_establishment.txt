@@ -1,0 +1,307 @@
+# RDMA/RoCEv2 Connection Establishment Process
+# This shows the complete connection establishment flow for RDMA operations
+
+# RDMA Connection Establishment is a multi-step process involving:
+# 1. Device discovery and capability exchange
+# 2. Queue Pair (QP) creation and configuration
+# 3. Memory region registration
+# 4. Connection establishment and state transitions
+# 5. Data transfer operations
+
+# =============================================================================
+# PHASE 1: DEVICE DISCOVERY AND CAPABILITY EXCHANGE
+# =============================================================================
+
+# Step 1: Client discovers available RDMA devices
+10:04:56.000001 IP 192.168.1.10.4791 > 192.168.1.20.4791: UDP, length 68
+    Ethernet II, Src: 02:00:00:00:00:01, Dst: 02:00:00:00:00:02
+    Internet Protocol Version 4, Src: 192.168.1.10, Dst: 192.168.1.20
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Send (0x04) - Device Discovery Request
+    InfiniBand: Data Extended Transport Header (8 bytes)
+        Queue Key: 0x0000
+        Reserved: 0x0000
+    Data: 32 bytes - Device Discovery Request
+        Message Type: DEVICE_DISCOVERY_REQ (0x01)
+        Client ID: 0x12345678
+        Capabilities: 0x0000000F
+        Reserved: 0x00000000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Step 2: Server responds with device capabilities
+10:04:56.000002 IP 192.168.1.20.4791 > 192.168.1.10.4791: UDP, length 100
+    Ethernet II, Src: 02:00:00:00:00:02, Dst: 02:00:00:00:00:01
+    Internet Protocol Version 4, Src: 192.168.1.20, Dst: 192.168.1.10
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Send (0x04) - Device Discovery Response
+    InfiniBand: Data Extended Transport Header (8 bytes)
+        Queue Key: 0x0000
+        Reserved: 0x0000
+    Data: 64 bytes - Device Discovery Response
+        Message Type: DEVICE_DISCOVERY_RESP (0x02)
+        Server ID: 0x87654321
+        Device GUID: 0x123456789ABCDEF0
+        Max Queue Pairs: 1024
+        Max Memory Regions: 1024
+        Max Message Size: 0x1000000
+        Supported Transports: RC, UC, UD, XRC
+        Reserved: 0x00000000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# =============================================================================
+# PHASE 2: QUEUE PAIR CREATION AND CONFIGURATION
+# =============================================================================
+
+# Step 3: Client creates Queue Pair (QP)
+10:04:56.000003 IP 192.168.1.10.4791 > 192.168.1.20.4791: UDP, length 100
+    Ethernet II, Src: 02:00:00:00:00:01, Dst: 02:00:00:00:00:02
+    Internet Protocol Version 4, Src: 192.168.1.10, Dst: 192.168.1.20
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Send (0x04) - QP Creation Request
+    InfiniBand: Data Extended Transport Header (8 bytes)
+        Queue Key: 0x0000
+        Reserved: 0x0000
+    Data: 64 bytes - QP Creation Request
+        Message Type: QP_CREATE_REQ (0x03)
+        QP Number: 0x0001
+        QP Type: RC (0x01)
+        Max Send WQE: 10
+        Max Recv WQE: 10
+        Max Send SGE: 1
+        Max Recv SGE: 1
+        Send Queue Size: 0x1000
+        Recv Queue Size: 0x1000
+        Reserved: 0x00000000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Step 4: Server creates corresponding QP
+10:04:56.000004 IP 192.168.1.20.4791 > 192.168.1.10.4791: UDP, length 100
+    Ethernet II, Src: 02:00:00:00:00:02, Dst: 02:00:00:00:00:01
+    Internet Protocol Version 4, Src: 192.168.1.20, Dst: 192.168.1.10
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Send (0x04) - QP Creation Response
+    InfiniBand: Data Extended Transport Header (8 bytes)
+        Queue Key: 0x0000
+        Reserved: 0x0000
+    Data: 64 bytes - QP Creation Response
+        Message Type: QP_CREATE_RESP (0x04)
+        QP Number: 0x0002
+        QP Type: RC (0x01)
+        Status: SUCCESS (0x00)
+        Max Send WQE: 10
+        Max Recv WQE: 10
+        Max Send SGE: 1
+        Max Recv SGE: 1
+        Send Queue Size: 0x1000
+        Recv Queue Size: 0x1000
+        Reserved: 0x00000000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# =============================================================================
+# PHASE 3: MEMORY REGION REGISTRATION
+# =============================================================================
+
+# Step 5: Client registers memory region
+10:04:56.000005 IP 192.168.1.10.4791 > 192.168.1.20.4791: UDP, length 100
+    Ethernet II, Src: 02:00:00:00:00:01, Dst: 02:00:00:00:00:02
+    Internet Protocol Version 4, Src: 192.168.1.10, Dst: 192.168.1.20
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Send (0x04) - Memory Registration Request
+    InfiniBand: Data Extended Transport Header (8 bytes)
+        Queue Key: 0x0000
+        Reserved: 0x0000
+    Data: 64 bytes - Memory Registration Request
+        Message Type: MR_REGISTER_REQ (0x05)
+        Memory Region ID: 0x0001
+        Virtual Address: 0x7f8b40000000
+        Length: 0x1000000
+        Access Flags: LOCAL_WRITE | REMOTE_WRITE | REMOTE_READ
+        Protection Domain: 0x0001
+        Reserved: 0x00000000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Step 6: Server registers memory region
+10:04:56.000006 IP 192.168.1.20.4791 > 192.168.1.10.4791: UDP, length 100
+    Ethernet II, Src: 02:00:00:00:00:02, Dst: 02:00:00:00:00:01
+    Internet Protocol Version 4, Src: 192.168.1.20, Dst: 192.168.1.10
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Send (0x04) - Memory Registration Response
+    InfiniBand: Data Extended Transport Header (8 bytes)
+        Queue Key: 0x0000
+        Reserved: 0x0000
+    Data: 64 bytes - Memory Registration Response
+        Message Type: MR_REGISTER_RESP (0x06)
+        Memory Region ID: 0x0002
+        Virtual Address: 0x7f8b50000000
+        Length: 0x1000000
+        Access Flags: LOCAL_WRITE | REMOTE_WRITE | REMOTE_READ
+        Protection Domain: 0x0002
+        Remote Key: 0x12345678
+        Local Key: 0x87654321
+        Reserved: 0x00000000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# =============================================================================
+# PHASE 4: CONNECTION ESTABLISHMENT AND STATE TRANSITIONS
+# =============================================================================
+
+# Step 7: Client initiates connection (QP state: INIT -> RTR)
+10:04:56.000007 IP 192.168.1.10.4791 > 192.168.1.20.4791: UDP, length 100
+    Ethernet II, Src: 02:00:00:00:00:01, Dst: 02:00:00:00:00:02
+    Internet Protocol Version 4, Src: 192.168.1.10, Dst: 192.168.1.20
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Send (0x04) - Connection Request
+    InfiniBand: Data Extended Transport Header (8 bytes)
+        Queue Key: 0x0000
+        Reserved: 0x0000
+    Data: 64 bytes - Connection Request
+        Message Type: CONNECTION_REQ (0x07)
+        Client QP Number: 0x0001
+        Server QP Number: 0x0002
+        Client GUID: 0x123456789ABCDEF0
+        Server GUID: 0x87654321FEDCBA98
+        Client Memory Key: 0x12345678
+        Server Memory Key: 0x87654321
+        Max Message Size: 0x1000000
+        Timeout: 0x00000014
+        Retry Count: 0x07
+        RNR Retry Count: 0x07
+        Reserved: 0x00000000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Step 8: Server accepts connection (QP state: RTR -> RTS)
+10:04:56.000008 IP 192.168.1.20.4791 > 192.168.1.10.4791: UDP, length 100
+    Ethernet II, Src: 02:00:00:00:00:02, Dst: 02:00:00:00:00:01
+    Internet Protocol Version 4, Src: 192.168.1.20, Dst: 192.168.1.10
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Send (0x04) - Connection Accept
+    InfiniBand: Data Extended Transport Header (8 bytes)
+        Queue Key: 0x0000
+        Reserved: 0x0000
+    Data: 64 bytes - Connection Accept
+        Message Type: CONNECTION_ACCEPT (0x08)
+        Client QP Number: 0x0001
+        Server QP Number: 0x0002
+        Status: SUCCESS (0x00)
+        Server Memory Key: 0x87654321
+        Client Memory Key: 0x12345678
+        Max Message Size: 0x1000000
+        Timeout: 0x00000014
+        Retry Count: 0x07
+        RNR Retry Count: 0x07
+        Reserved: 0x00000000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Step 9: Client confirms connection (QP state: RTS)
+10:04:56.000009 IP 192.168.1.10.4791 > 192.168.1.20.4791: UDP, length 68
+    Ethernet II, Src: 02:00:00:00:00:01, Dst: 02:00:00:00:00:02
+    Internet Protocol Version 4, Src: 192.168.1.10, Dst: 192.168.1.20
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Send (0x04) - Connection Confirm
+    InfiniBand: Data Extended Transport Header (8 bytes)
+        Queue Key: 0x0000
+        Reserved: 0x0000
+    Data: 32 bytes - Connection Confirm
+        Message Type: CONNECTION_CONFIRM (0x09)
+        Client QP Number: 0x0001
+        Server QP Number: 0x0002
+        Status: SUCCESS (0x00)
+        Reserved: 0x00000000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# =============================================================================
+# PHASE 5: DATA TRANSFER OPERATIONS (Now Ready)
+# =============================================================================
+
+# Step 10: Client sends first data packet
+10:04:56.000010 IP 192.168.1.10.4791 > 192.168.1.20.4791: UDP, length 4148
+    Ethernet II, Src: 02:00:00:00:00:01, Dst: 02:00:00:00:00:02
+    Internet Protocol Version 4, Src: 192.168.1.10, Dst: 192.168.1.20
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: RDMA Write (0x08)
+        Destination Queue Pair: 0x0002
+        Packet Sequence Number: 0x00000001
+    InfiniBand: RDMA Extended Transport Header (16 bytes)
+        Virtual Address: 0x7f8b50000000
+        Remote Key: 0x87654321
+        DMA Length: 4096
+        Reserved: 0x0000
+    Data: 4096 bytes of application data
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Step 11: Server acknowledges data
+10:04:56.000011 IP 192.168.1.20.4791 > 192.168.1.10.4791: UDP, length 68
+    Ethernet II, Src: 02:00:00:00:00:02, Dst: 02:00:00:00:00:01
+    Internet Protocol Version 4, Src: 192.168.1.20, Dst: 192.168.1.10
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: ACK (0x60)
+        Destination Queue Pair: 0x0001
+        Packet Sequence Number: 0x00000001
+    InfiniBand: ACK Extended Transport Header (4 bytes)
+        MSNA: 0x00000001
+        Reserved: 0x0000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# =============================================================================
+# CONNECTION ESTABLISHMENT SUMMARY
+# =============================================================================
+
+# Queue Pair State Transitions:
+# 1. RESET -> INIT: QP created
+# 2. INIT -> RTR (Ready to Receive): QP configured
+# 3. RTR -> RTS (Ready to Send): Connection established
+# 4. RTS -> ERROR: Error condition
+# 5. ERROR -> RESET: Reset for reuse
+
+# Memory Region States:
+# 1. UNREGISTERED: Memory not accessible
+# 2. REGISTERED: Memory accessible for RDMA operations
+# 3. INVALID: Memory region invalidated
+
+# Connection States:
+# 1. DISCONNECTED: No connection
+# 2. CONNECTING: Connection in progress
+# 3. CONNECTED: Ready for data transfer
+# 4. DISCONNECTING: Connection being torn down
+# 5. DISCONNECTED: Connection closed
+
+# Key Parameters Exchanged:
+# - Queue Pair Numbers (QPN)
+# - Memory Region Keys (Local/Remote)
+# - Maximum Message Size
+# - Timeout and Retry Counts
+# - Transport Type (RC, UC, UD, XRC)
+# - Access Permissions
