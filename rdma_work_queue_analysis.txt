@@ -1,0 +1,405 @@
+# RDMA Work Queue Entries (WQEs) and Completions Analysis
+# This shows how work queue requests and completions work in RDMA operations
+
+# Work Queue Entries (WQEs) are the fundamental units of work in RDMA
+# They are posted to Send Queue (SQ) and Receive Queue (RQ)
+# Completions are reported through Completion Queue (CQ)
+
+# =============================================================================
+# WORK QUEUE STRUCTURE OVERVIEW
+# =============================================================================
+
+# RDMA Work Queues consist of:
+# 1. Send Queue (SQ) - Outgoing work requests
+# 2. Receive Queue (RQ) - Incoming work requests  
+# 3. Completion Queue (CQ) - Work completion notifications
+# 4. Shared Receive Queue (SRQ) - Shared receive queue (optional)
+
+# =============================================================================
+# SEND QUEUE WORK REQUEST EXAMPLES
+# =============================================================================
+
+# SEND Work Request (Message Passing)
+10:04:56.000001 IP 192.168.1.10.4791 > 192.168.1.20.4791: UDP, length 100
+    Ethernet II, Src: 02:00:00:00:00:01, Dst: 02:00:00:00:00:02
+    Internet Protocol Version 4, Src: 192.168.1.10, Dst: 192.168.1.20
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Send (0x04)
+        Solicited Event: 1
+        Migrated: 0
+        Pad Count: 0
+        Transport Header Version: 0
+        Partition Key: 0x1234
+        Destination Queue Pair: 0x0002
+        Packet Sequence Number: 0x00000001
+        Packet Serial Number: 0x00000001
+    InfiniBand: Data Extended Transport Header (8 bytes)
+        Queue Key: 0x1234
+        Reserved: 0x0000
+    Data: 64 bytes of message data
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Work Queue Entry (WQE) Details for SEND:
+# WQE Structure (64 bytes):
+#   Work Request ID: 0x00000001
+#   Opcode: SEND (0x04)
+#   Send Flags: 0x01 (Solicited Event)
+#   Immediate Data: 0x00000000
+#   Remote Address: 0x0000000000000000
+#   Remote Key: 0x00000000
+#   Send Queue Key: 0x1234
+#   Scatter/Gather Elements: 1
+#   SGE[0]: Address: 0x7f8b40000000, Length: 64, LKey: 0x5678
+#   Reserved: 0x00000000
+
+# RDMA WRITE Work Request (Direct Memory Transfer)
+10:04:56.000002 IP 192.168.1.10.4791 > 192.168.1.20.4791: UDP, length 4148
+    Ethernet II, Src: 02:00:00:00:00:01, Dst: 02:00:00:00:00:02
+    Internet Protocol Version 4, Src: 192.168.1.10, Dst: 192.168.1.20
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: RDMA Write (0x08)
+        Solicited Event: 1
+        Migrated: 0
+        Pad Count: 0
+        Transport Header Version: 0
+        Partition Key: 0x1234
+        Destination Queue Pair: 0x0002
+        Packet Sequence Number: 0x00000002
+        Packet Serial Number: 0x00000002
+    InfiniBand: RDMA Extended Transport Header (16 bytes)
+        Virtual Address: 0x7f8b50000000
+        Remote Key: 0x87654321
+        DMA Length: 4096
+        Reserved: 0x0000
+    Data: 4096 bytes of application data
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Work Queue Entry (WQE) Details for RDMA WRITE:
+# WQE Structure (64 bytes):
+#   Work Request ID: 0x00000002
+#   Opcode: RDMA WRITE (0x08)
+#   Send Flags: 0x01 (Solicited Event)
+#   Immediate Data: 0x00000000
+#   Remote Address: 0x7f8b50000000
+#   Remote Key: 0x87654321
+#   Send Queue Key: 0x1234
+#   Scatter/Gather Elements: 1
+#   SGE[0]: Address: 0x7f8b40000000, Length: 4096, LKey: 0x5678
+#   Reserved: 0x00000000
+
+# RDMA READ Work Request (Remote Memory Access)
+10:04:56.000003 IP 192.168.1.10.4791 > 192.168.1.20.4791: UDP, length 68
+    Ethernet II, Src: 02:00:00:00:00:01, Dst: 02:00:00:00:00:02
+    Internet Protocol Version 4, Src: 192.168.1.10, Dst: 192.168.1.20
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: RDMA Read Request (0x08)
+        Solicited Event: 1
+        Migrated: 0
+        Pad Count: 0
+        Transport Header Version: 0
+        Partition Key: 0x1234
+        Destination Queue Pair: 0x0002
+        Packet Sequence Number: 0x00000003
+        Packet Serial Number: 0x00000003
+    InfiniBand: RDMA Extended Transport Header (16 bytes)
+        Virtual Address: 0x7f8b50001000
+        Remote Key: 0x87654321
+        DMA Length: 1024
+        Reserved: 0x0000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Work Queue Entry (WQE) Details for RDMA READ:
+# WQE Structure (64 bytes):
+#   Work Request ID: 0x00000003
+#   Opcode: RDMA READ (0x08)
+#   Send Flags: 0x01 (Solicited Event)
+#   Immediate Data: 0x00000000
+#   Remote Address: 0x7f8b50001000
+#   Remote Key: 0x87654321
+#   Send Queue Key: 0x1234
+#   Scatter/Gather Elements: 1
+#   SGE[0]: Address: 0x7f8b40001000, Length: 1024, LKey: 0x5678
+#   Reserved: 0x00000000
+
+# ATOMIC Work Request (Synchronization)
+10:04:56.000004 IP 192.168.1.10.4791 > 192.168.1.20.4791: UDP, length 68
+    Ethernet II, Src: 02:00:00:00:00:01, Dst: 02:00:00:00:00:02
+    Internet Protocol Version 4, Src: 192.168.1.10, Dst: 192.168.1.20
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Atomic Compare and Swap (0x0F)
+        Solicited Event: 1
+        Migrated: 0
+        Pad Count: 0
+        Transport Header Version: 0
+        Partition Key: 0x1234
+        Destination Queue Pair: 0x0002
+        Packet Sequence Number: 0x00000004
+        Packet Serial Number: 0x00000004
+    InfiniBand: Atomic Extended Transport Header (16 bytes)
+        Virtual Address: 0x7f8b50002000
+        Remote Key: 0x87654321
+        Compare Add: 0x0000000000000000
+        Swap: 0x0000000000000001
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Work Queue Entry (WQE) Details for ATOMIC:
+# WQE Structure (64 bytes):
+#   Work Request ID: 0x00000004
+#   Opcode: ATOMIC C&S (0x0F)
+#   Send Flags: 0x01 (Solicited Event)
+#   Immediate Data: 0x00000000
+#   Remote Address: 0x7f8b50002000
+#   Remote Key: 0x87654321
+#   Send Queue Key: 0x1234
+#   Scatter/Gather Elements: 1
+#   SGE[0]: Address: 0x7f8b40002000, Length: 8, LKey: 0x5678
+#   Compare Add: 0x0000000000000000
+#   Swap: 0x0000000000000001
+#   Reserved: 0x00000000
+
+# =============================================================================
+# RECEIVE QUEUE WORK REQUEST EXAMPLES
+# =============================================================================
+
+# RECEIVE Work Request (Message Reception)
+# Note: RECEIVE WQEs are posted to RQ but don't generate network traffic
+# They are consumed when incoming messages arrive
+
+# Work Queue Entry (WQE) Details for RECEIVE:
+# WQE Structure (64 bytes):
+#   Work Request ID: 0x00000005
+#   Opcode: RECEIVE (0x04)
+#   Send Flags: 0x00
+#   Immediate Data: 0x00000000
+#   Remote Address: 0x0000000000000000
+#   Remote Key: 0x00000000
+#   Receive Queue Key: 0x1234
+#   Scatter/Gather Elements: 1
+#   SGE[0]: Address: 0x7f8b40003000, Length: 1024, LKey: 0x5678
+#   Reserved: 0x00000000
+
+# =============================================================================
+# WORK QUEUE COMPLETION EXAMPLES
+# =============================================================================
+
+# SEND Completion (Successful)
+10:04:56.000005 IP 192.168.1.20.4791 > 192.168.1.10.4791: UDP, length 68
+    Ethernet II, Src: 02:00:00:00:00:02, Dst: 02:00:00:00:00:01
+    Internet Protocol Version 4, Src: 192.168.1.20, Dst: 192.168.1.10
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: ACK (0x60)
+        Solicited Event: 1
+        Migrated: 0
+        Pad Count: 0
+        Transport Header Version: 0
+        Partition Key: 0x1234
+        Destination Queue Pair: 0x0001
+        Packet Sequence Number: 0x00000001
+        Packet Serial Number: 0x00000001
+    InfiniBand: ACK Extended Transport Header (4 bytes)
+        MSNA: 0x00000001
+        Reserved: 0x0000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Work Queue Completion (WQC) Details for SEND:
+# WQC Structure (16 bytes):
+#   Work Request ID: 0x00000001
+#   Status: SUCCESS (0x00)
+#   Opcode: SEND (0x04)
+#   Vendor Error: 0x0000
+#   Byte Length: 64
+#   Immediate Data: 0x00000000
+#   QP Number: 0x0001
+#   Reserved: 0x0000
+
+# RDMA WRITE Completion (Successful)
+10:04:56.000006 IP 192.168.1.20.4791 > 192.168.1.10.4791: UDP, length 68
+    Ethernet II, Src: 02:00:00:00:00:02, Dst: 02:00:00:00:00:01
+    Internet Protocol Version 4, Src: 192.168.1.20, Dst: 192.168.1.10
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: ACK (0x60)
+        Solicited Event: 1
+        Migrated: 0
+        Pad Count: 0
+        Transport Header Version: 0
+        Partition Key: 0x1234
+        Destination Queue Pair: 0x0001
+        Packet Sequence Number: 0x00000002
+        Packet Serial Number: 0x00000002
+    InfiniBand: ACK Extended Transport Header (4 bytes)
+        MSNA: 0x00000002
+        Reserved: 0x0000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Work Queue Completion (WQC) Details for RDMA WRITE:
+# WQC Structure (16 bytes):
+#   Work Request ID: 0x00000002
+#   Status: SUCCESS (0x00)
+#   Opcode: RDMA WRITE (0x08)
+#   Vendor Error: 0x0000
+#   Byte Length: 4096
+#   Immediate Data: 0x00000000
+#   QP Number: 0x0001
+#   Reserved: 0x0000
+
+# RDMA READ Response (Completion with Data)
+10:04:56.000007 IP 192.168.1.20.4791 > 192.168.1.10.4791: UDP, length 1084
+    Ethernet II, Src: 02:00:00:00:00:02, Dst: 02:00:00:00:00:01
+    Internet Protocol Version 4, Src: 192.168.1.20, Dst: 192.168.1.10
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: RDMA Read Response (0x09)
+        Solicited Event: 1
+        Migrated: 0
+        Pad Count: 0
+        Transport Header Version: 0
+        Partition Key: 0x1234
+        Destination Queue Pair: 0x0001
+        Packet Sequence Number: 0x00000003
+        Packet Serial Number: 0x00000003
+    InfiniBand: RDMA Extended Transport Header (16 bytes)
+        Virtual Address: 0x7f8b50001000
+        Remote Key: 0x87654321
+        DMA Length: 1024
+        Reserved: 0x0000
+    Data: 1024 bytes of read data
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Work Queue Completion (WQC) Details for RDMA READ:
+# WQC Structure (16 bytes):
+#   Work Request ID: 0x00000003
+#   Status: SUCCESS (0x00)
+#   Opcode: RDMA READ (0x08)
+#   Vendor Error: 0x0000
+#   Byte Length: 1024
+#   Immediate Data: 0x00000000
+#   QP Number: 0x0001
+#   Reserved: 0x0000
+
+# ATOMIC Response (Completion with Result)
+10:04:56.000008 IP 192.168.1.20.4791 > 192.168.1.10.4791: UDP, length 76
+    Ethernet II, Src: 02:00:00:00:00:02, Dst: 02:00:00:00:00:01
+    Internet Protocol Version 4, Src: 192.168.1.20, Dst: 192.168.1.10
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: Atomic Response (0x10)
+        Solicited Event: 1
+        Migrated: 0
+        Pad Count: 0
+        Transport Header Version: 0
+        Partition Key: 0x1234
+        Destination Queue Pair: 0x0001
+        Packet Sequence Number: 0x00000004
+        Packet Serial Number: 0x00000004
+    InfiniBand: Atomic Extended Transport Header (16 bytes)
+        Virtual Address: 0x7f8b50002000
+        Remote Key: 0x87654321
+        Compare Add: 0x0000000000000000
+        Swap: 0x0000000000000001
+    Data: 8 bytes of atomic result
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Work Queue Completion (WQC) Details for ATOMIC:
+# WQC Structure (16 bytes):
+#   Work Request ID: 0x00000004
+#   Status: SUCCESS (0x00)
+#   Opcode: ATOMIC C&S (0x0F)
+#   Vendor Error: 0x0000
+#   Byte Length: 8
+#   Immediate Data: 0x00000000
+#   QP Number: 0x0001
+#   Reserved: 0x0000
+
+# =============================================================================
+# ERROR COMPLETION EXAMPLES
+# =============================================================================
+
+# Work Request Error (Invalid Remote Key)
+10:04:56.000009 IP 192.168.1.20.4791 > 192.168.1.10.4791: UDP, length 68
+    Ethernet II, Src: 02:00:00:00:00:02, Dst: 02:00:00:00:00:01
+    Internet Protocol Version 4, Src: 192.168.1.20, Dst: 192.168.1.10
+    User Datagram Protocol, Src Port: 4791, Dst Port: 4791
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+        Opcode: NAK (0x20)
+        Solicited Event: 1
+        Migrated: 0
+        Pad Count: 0
+        Transport Header Version: 0
+        Partition Key: 0x1234
+        Destination Queue Pair: 0x0001
+        Packet Sequence Number: 0x00000005
+        Packet Serial Number: 0x00000005
+    InfiniBand: NAK Extended Transport Header (4 bytes)
+        MSNA: 0x00000005
+        Reserved: 0x0000
+    InfiniBand: Invariant CRC (4 bytes)
+
+# Work Queue Completion (WQC) Details for ERROR:
+# WQC Structure (16 bytes):
+#   Work Request ID: 0x00000005
+#   Status: REMOTE_ACCESS_ERROR (0x04)
+#   Opcode: RDMA WRITE (0x08)
+#   Vendor Error: 0x0000
+#   Byte Length: 0
+#   Immediate Data: 0x00000000
+#   QP Number: 0x0001
+#   Reserved: 0x0000
+
+# =============================================================================
+# WORK QUEUE MANAGEMENT
+# =============================================================================
+
+# Work Queue Management involves:
+# 1. Posting Work Requests to Send/Receive Queues
+# 2. Polling Completion Queue for completions
+# 3. Handling errors and retries
+# 4. Managing queue depths and flow control
+
+# Queue Management Commands:
+# - ibv_post_send(): Post work request to send queue
+# - ibv_post_recv(): Post work request to receive queue
+# - ibv_poll_cq(): Poll completion queue for completions
+# - ibv_req_notify_cq(): Request completion notification
+# - ibv_get_cq_event(): Get completion event
+
+# =============================================================================
+# WORK QUEUE PERFORMANCE CHARACTERISTICS
+# =============================================================================
+
+# Work Queue Performance:
+# - WQE Size: 64 bytes (typical)
+# - Queue Depth: 1-1024 WQEs (configurable)
+# - Posting Latency: 0.1-1 μs
+# - Completion Latency: 0.1-5 μs
+# - Throughput: 1-10M WQEs/second
+
+# Completion Queue Performance:
+# - CQE Size: 16 bytes (typical)
+# - Queue Depth: 1-1024 CQEs (configurable)
+# - Polling Latency: 0.1-1 μs
+# - Notification Latency: 1-10 μs
+# - Throughput: 1-10M CQEs/second

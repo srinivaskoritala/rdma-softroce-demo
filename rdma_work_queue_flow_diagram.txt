@@ -1,0 +1,163 @@
+RDMA Work Queue Flow Diagram
+============================
+
+Application                    Hardware                    Network
+----------                    --------                    -------
+    |                            |                          |
+    |-- Post WQE to SQ --------->|                          |
+    |   (ibv_post_send)          |                          |
+    |                            |                          |
+    |                            |-- Process WQE ---------->|
+    |                            |   (Generate packets)     |
+    |                            |                          |
+    |                            |<-- Network Response -----|
+    |                            |   (ACK, Data, etc.)      |
+    |                            |                          |
+    |                            |-- Generate CQE --------->|
+    |                            |   (Completion)           |
+    |                            |                          |
+    |<-- Poll CQ ----------------|                          |
+    |   (ibv_poll_cq)            |                          |
+    |                            |                          |
+
+Work Queue Components:
+=====================
+
+Send Queue (SQ):                    Receive Queue (RQ):
+┌─────────────────┐                 ┌─────────────────┐
+│ WQE 1: SEND     │                 │ WQE 1: RECEIVE  │
+│ WQE 2: RDMA_WR  │                 │ WQE 2: RECEIVE  │
+│ WQE 3: RDMA_RD  │                 │ WQE 3: RECEIVE  │
+│ WQE 4: ATOMIC   │                 │ WQE 4: RECEIVE  │
+│ ...             │                 │ ...             │
+└─────────────────┘                 └─────────────────┘
+
+Completion Queue (CQ):
+┌─────────────────┐
+│ CQE 1: SUCCESS  │
+│ CQE 2: SUCCESS  │
+│ CQE 3: ERROR    │
+│ CQE 4: SUCCESS  │
+│ ...             │
+└─────────────────┘
+
+Work Queue Entry (WQE) Structure:
+=================================
+
+┌─────────────────────────────────────────────────────────────┐
+│ Work Request ID (8 bytes)                                  │
+├─────────────────────────────────────────────────────────────┤
+│ Opcode (1 byte) | Send Flags (1 byte) | Immediate (4 bytes)│
+├─────────────────────────────────────────────────────────────┤
+│ Remote Address (8 bytes)                                   │
+├─────────────────────────────────────────────────────────────┤
+│ Remote Key (4 bytes) | Send Queue Key (4 bytes)           │
+├─────────────────────────────────────────────────────────────┤
+│ Scatter/Gather Elements (variable)                         │
+│   SGE[0]: Address, Length, LKey                           │
+│   SGE[1]: Address, Length, LKey (if needed)               │
+│   ...                                                      │
+└─────────────────────────────────────────────────────────────┘
+
+Completion Queue Entry (CQE) Structure:
+=======================================
+
+┌─────────────────────────────────────────────────────────────┐
+│ Work Request ID (8 bytes)                                  │
+├─────────────────────────────────────────────────────────────┤
+│ Status (1 byte) | Opcode (1 byte) | Vendor Error (2 bytes) │
+├─────────────────────────────────────────────────────────────┤
+│ Byte Length (4 bytes) | Immediate Data (4 bytes)          │
+├─────────────────────────────────────────────────────────────┤
+│ QP Number (4 bytes) | Reserved (4 bytes)                  │
+└─────────────────────────────────────────────────────────────┘
+
+Work Queue Operations:
+=====================
+
+SEND Operation:
+  Application -> Hardware: Post SEND WQE
+  Hardware -> Network: SEND packet
+  Network -> Hardware: ACK packet
+  Hardware -> Application: SEND completion
+
+RDMA WRITE Operation:
+  Application -> Hardware: Post RDMA_WRITE WQE
+  Hardware -> Network: RDMA WRITE packet + data
+  Network -> Hardware: ACK packet
+  Hardware -> Application: RDMA_WRITE completion
+
+RDMA READ Operation:
+  Application -> Hardware: Post RDMA_READ WQE
+  Hardware -> Network: RDMA READ REQUEST packet
+  Network -> Hardware: RDMA READ RESPONSE packet + data
+  Hardware -> Application: RDMA_READ completion
+
+ATOMIC Operation:
+  Application -> Hardware: Post ATOMIC WQE
+  Hardware -> Network: ATOMIC REQUEST packet
+  Network -> Hardware: ATOMIC RESPONSE packet + result
+  Hardware -> Application: ATOMIC completion
+
+RECEIVE Operation:
+  Application -> Hardware: Post RECEIVE WQE (pre-posted)
+  Network -> Hardware: Incoming message
+  Hardware -> Application: RECEIVE completion
+  Application -> Hardware: Post new RECEIVE WQE
+
+Work Queue States:
+=================
+
+WQE States:
+  POSTED: WQE posted to queue
+  PROCESSING: Hardware processing WQE
+  COMPLETED: WQE completed successfully
+  ERROR: WQE completed with error
+
+CQE States:
+  PENDING: Completion pending
+  POLLED: Completion polled by application
+  PROCESSED: Completion processed by application
+
+Performance Characteristics:
+===========================
+
+WQE Performance:
+  - Size: 64 bytes (typical)
+  - Queue Depth: 1-1024 WQEs
+  - Posting Latency: 0.1-1 μs
+  - Processing Latency: 0.1-5 μs
+  - Throughput: 1-10M WQEs/second
+
+CQE Performance:
+  - Size: 16 bytes (typical)
+  - Queue Depth: 1-1024 CQEs
+  - Polling Latency: 0.1-1 μs
+  - Notification Latency: 1-10 μs
+  - Throughput: 1-10M CQEs/second
+
+Work Queue Management:
+=====================
+
+Posting Work Requests:
+  ibv_post_send(qp, wr, bad_wr)  # Post to send queue
+  ibv_post_recv(qp, wr, bad_wr)  # Post to receive queue
+
+Polling Completions:
+  ibv_poll_cq(cq, num_entries, wc)  # Poll completion queue
+  ibv_req_notify_cq(cq, solicited_only)  # Request notification
+  ibv_get_cq_event(channel, cq, cq_context)  # Get completion event
+
+Error Handling:
+  - Check completion status
+  - Implement retry mechanisms
+  - Handle queue full conditions
+  - Monitor error rates
+
+Best Practices:
+  - Size queues based on workload
+  - Poll completions regularly
+  - Handle errors gracefully
+  - Free resources promptly
+  - Batch work requests when possible
+  - Monitor completion rates
