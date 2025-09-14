@@ -1,24 +1,321 @@
-RDMA Work Queue Flow Diagram
+RDMA Work Queue Complete End-to-End Flow Diagram
+================================================
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    RDMA APPLICATION LAYER                                              │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Application Code  │  RDMA Verbs API  │  Memory Management  │  Queue Management  │  Error Handling     │
+│  ┌─────────────┐   │  ┌─────────────┐ │  ┌─────────────┐    │  ┌─────────────┐   │  ┌─────────────┐    │
+│  │ Post WQE    │───┼─▶│ibv_post_send│ │  │ Register MR │    │  │ Create QP   │   │  │ Check Status│    │
+│  │ Poll CQ     │───┼─▶│ibv_post_recv│ │  │ Allocate   │    │  │ Create CQ   │   │  │ Handle Error│    │
+│  │ Handle Data │───┼─▶│ibv_poll_cq  │ │  │ Buffer     │    │  │ Manage SQ/RQ│   │  │ Retry Logic │    │
+│  └─────────────┘   │  └─────────────┘ │  └─────────────┘    │  └─────────────┘   │  └─────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    RDMA HARDWARE LAYER                                                 │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Work Queue Engine  │  Packet Processing  │  Memory Access  │  Completion Engine  │  Network Interface  │
+│  ┌─────────────┐    │  ┌─────────────┐    │  ┌─────────────┐ │  ┌─────────────┐    │  ┌─────────────┐    │
+│  │ Process WQE │    │  │ Generate    │    │  │ DMA Read   │ │  │ Generate    │    │  │ Ethernet    │    │
+│  │ Validate    │    │  │ RoCEv2      │    │  │ DMA Write  │ │  │ CQE         │    │  │ Interface   │    │
+│  │ Execute     │    │  │ Packets     │    │  │ Memory     │ │  │ Notify      │    │  │ MAC Layer   │    │
+│  └─────────────┘    │  └─────────────┘    │  └─────────────┘ │  └─────────────┘    │  └─────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    NETWORK LAYER                                                       │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Ethernet Switch  │  IP Routing  │  UDP Transport  │  RoCEv2 Protocol  │  InfiniBand Transport  │
+│  ┌─────────────┐  │  ┌─────────┐  │  ┌───────────┐  │  ┌─────────────┐  │  ┌─────────────────┐  │
+│  │ MAC Address │  │  │ IP Addr │  │  │ Port 4791 │  │  │ BTH Header  │  │  │ RETH/DETH/AETH  │  │
+│  │ Forwarding  │  │  │ Routing │  │  │ Checksum  │  │  │ PSN/ACK     │  │  │ Payload Data    │  │
+│  │ VLAN Tag    │  │  │ TTL    │  │  │ Length    │  │  │ Flow Ctrl   │  │  │ CRC32          │  │
+│  └─────────────┘  │  └─────────┘  │  └───────────┘  │  └─────────────┘  │  └─────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    REMOTE HOST                                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Network Interface  │  Packet Processing  │  Work Queue Engine  │  Memory Access  │  Application       │
+│  ┌─────────────┐    │  ┌─────────────┐    │  ┌─────────────┐    │  ┌─────────────┐ │  ┌─────────────┐    │
+│  │ Receive     │    │  │ Parse       │    │  │ Process     │    │  │ DMA Write   │ │  │ Process     │    │
+│  │ Ethernet    │    │  │ RoCEv2      │    │  │ WQE        │    │  │ Memory      │ │  │ Data        │    │
+│  │ Frame       │    │  │ Headers     │    │  │ Execute    │    │  │ Access      │ │  │ Handle      │    │
+│  └─────────────┘    │  └─────────────┘    │  └─────────────┘    │  └─────────────┘ │  └─────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    RESPONSE PATH                                                       │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Generate Response  │  Network Processing  │  Local Processing  │  Completion Generation  │  Application │
+│  ┌─────────────┐    │  ┌─────────────┐    │  ┌─────────────┐   │  ┌─────────────┐        │  ┌─────────┐  │
+│  │ ACK Packet  │    │  │ Ethernet    │    │  │ Process     │   │  │ Generate    │        │  │ Poll CQ │  │
+│  │ Data Packet │    │  │ IP/UDP      │    │  │ Response    │   │  │ CQE         │        │  │ Handle  │  │
+│  │ Error Packet│    │  │ RoCEv2      │    │  │ WQE        │   │  │ Notify      │        │  │ Data    │  │
+│  └─────────────┘    │  └─────────────┘    │  └─────────────┘   │  └─────────────┘        │  └─────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+DETAILED STEP-BY-STEP FLOW SEQUENCES:
+=====================================
+
+1. SEND OPERATION FLOW:
+───────────────────────
+Application Layer:
+  ├─ 1.1: Allocate memory buffer
+  ├─ 1.2: Register memory region (MR)
+  ├─ 1.3: Create work request (WR)
+  ├─ 1.4: Post WQE to Send Queue
+  └─ 1.5: Poll Completion Queue
+
+Hardware Layer:
+  ├─ 2.1: Validate WQE parameters
+  ├─ 2.2: Read data from memory (DMA)
+  ├─ 2.3: Generate RoCEv2 packet
+  ├─ 2.4: Transmit via network interface
+  └─ 2.5: Wait for ACK
+
+Network Layer:
+  ├─ 3.1: Ethernet frame encapsulation
+  ├─ 3.2: IP routing and forwarding
+  ├─ 3.3: UDP transport (port 4791)
+  ├─ 3.4: RoCEv2 protocol processing
+  └─ 3.5: InfiniBand transport headers
+
+Remote Host:
+  ├─ 4.1: Receive Ethernet frame
+  ├─ 4.2: Parse RoCEv2 headers
+  ├─ 4.3: Process SEND operation
+  ├─ 4.4: Generate ACK response
+  └─ 4.5: Transmit ACK packet
+
+Response Path:
+  ├─ 5.1: ACK packet received
+  ├─ 5.2: Generate completion (CQE)
+  ├─ 5.3: Notify application
+  ├─ 5.4: Application polls CQ
+  └─ 5.5: Process completion
+
+2. RDMA WRITE OPERATION FLOW:
+─────────────────────────────
+Application Layer:
+  ├─ 1.1: Allocate local buffer
+  ├─ 1.2: Register local memory region
+  ├─ 1.3: Get remote memory address/key
+  ├─ 1.4: Create RDMA WRITE work request
+  └─ 1.5: Post WQE to Send Queue
+
+Hardware Layer:
+  ├─ 2.1: Validate WQE and remote parameters
+  ├─ 2.2: Read data from local memory (DMA)
+  ├─ 2.3: Generate RDMA WRITE packet
+  ├─ 2.4: Add RETH header with remote address
+  └─ 2.5: Transmit packet with data
+
+Network Layer:
+  ├─ 3.1: Large packet fragmentation (if needed)
+  ├─ 3.2: Ethernet frame with data payload
+  ├─ 3.3: IP routing to remote host
+  ├─ 3.4: UDP transport with RoCEv2
+  └─ 3.5: InfiniBand RETH header
+
+Remote Host:
+  ├─ 4.1: Receive RDMA WRITE packet
+  ├─ 4.2: Parse RETH header for remote address
+  ├─ 4.3: Validate remote memory access
+  ├─ 4.4: Write data to remote memory (DMA)
+  └─ 4.5: Generate ACK response
+
+Response Path:
+  ├─ 5.1: ACK received by sender
+  ├─ 5.2: Generate completion (CQE)
+  ├─ 5.3: Notify application
+  └─ 5.4: Application processes completion
+
+3. RDMA READ OPERATION FLOW:
+────────────────────────────
+Application Layer:
+  ├─ 1.1: Allocate local buffer for data
+  ├─ 1.2: Register local memory region
+  ├─ 1.3: Get remote memory address/key
+  ├─ 1.4: Create RDMA READ work request
+  └─ 1.5: Post WQE to Send Queue
+
+Hardware Layer:
+  ├─ 2.1: Validate WQE parameters
+  ├─ 2.2: Generate RDMA READ REQUEST packet
+  ├─ 2.3: Add RETH header with remote address
+  └─ 2.4: Transmit request packet
+
+Network Layer:
+  ├─ 3.1: Small request packet
+  ├─ 3.2: Ethernet frame with request
+  ├─ 3.3: IP routing to remote host
+  └─ 3.4: UDP transport with RoCEv2
+
+Remote Host:
+  ├─ 4.1: Receive RDMA READ REQUEST
+  ├─ 4.2: Parse RETH header for remote address
+  ├─ 4.3: Validate remote memory access
+  ├─ 4.4: Read data from remote memory (DMA)
+  ├─ 4.5: Generate RDMA READ RESPONSE
+  └─ 4.6: Transmit response with data
+
+Response Path:
+  ├─ 5.1: RDMA READ RESPONSE received
+  ├─ 5.2: Parse response and extract data
+  ├─ 5.3: Write data to local memory (DMA)
+  ├─ 5.4: Generate completion (CQE)
+  └─ 5.5: Application processes completion
+
+4. ATOMIC OPERATION FLOW:
+─────────────────────────
+Application Layer:
+  ├─ 1.1: Allocate local buffer for result
+  ├─ 1.2: Register local memory region
+  ├─ 1.3: Get remote memory address/key
+  ├─ 1.4: Create ATOMIC work request
+  └─ 1.5: Post WQE to Send Queue
+
+Hardware Layer:
+  ├─ 2.1: Validate WQE parameters
+  ├─ 2.2: Generate ATOMIC REQUEST packet
+  ├─ 2.3: Add AETH header with compare/swap values
+  └─ 2.4: Transmit request packet
+
+Network Layer:
+  ├─ 3.1: Small atomic request packet
+  ├─ 3.2: Ethernet frame with request
+  ├─ 3.3: IP routing to remote host
+  └─ 3.4: UDP transport with RoCEv2
+
+Remote Host:
+  ├─ 4.1: Receive ATOMIC REQUEST
+  ├─ 4.2: Parse AETH header for atomic operation
+  ├─ 4.3: Perform atomic operation on remote memory
+  ├─ 4.4: Generate ATOMIC RESPONSE with result
+  └─ 4.5: Transmit response packet
+
+Response Path:
+  ├─ 5.1: ATOMIC RESPONSE received
+  ├─ 5.2: Parse response and extract result
+  ├─ 5.3: Write result to local memory (DMA)
+  ├─ 5.4: Generate completion (CQE)
+  └─ 5.5: Application processes completion
+
+5. RECEIVE OPERATION FLOW:
+──────────────────────────
+Application Layer:
+  ├─ 1.1: Pre-post RECEIVE work requests
+  ├─ 1.2: Allocate receive buffers
+  ├─ 1.3: Register memory regions
+  └─ 1.4: Post WQEs to Receive Queue
+
+Hardware Layer:
+  ├─ 2.1: Wait for incoming packets
+  ├─ 2.2: Match incoming packet to WQE
+  ├─ 2.3: Write data to receive buffer (DMA)
+  └─ 2.4: Generate completion (CQE)
+
+Network Layer:
+  ├─ 3.1: Incoming Ethernet frame
+  ├─ 3.2: IP/UDP packet processing
+  ├─ 3.3: RoCEv2 protocol parsing
+  └─ 3.4: InfiniBand transport processing
+
+Response Path:
+  ├─ 5.1: Completion generated
+  ├─ 5.2: Notify application
+  ├─ 5.3: Application polls CQ
+  ├─ 5.4: Process received data
+  └─ 5.5: Post new RECEIVE WQE
+
+PACKET STRUCTURE FLOW:
+=====================
+
+Ethernet Frame:
+┌─────────────┬─────────────┬─────────────┬─────────────┬─────────────┐
+│ MAC Header  │ IP Header   │ UDP Header  │ RoCEv2      │ InfiniBand  │
+│ (14 bytes)  │ (20 bytes)  │ (8 bytes)   │ Headers     │ Payload     │
+│             │             │ Port 4791   │ (BTH, etc.) │ Data        │
+└─────────────┴─────────────┴─────────────┴─────────────┴─────────────┘
+
+TIMING AND PERFORMANCE FLOW:
 ============================
 
-Application                    Hardware                    Network
-----------                    --------                    -------
-    |                            |                          |
-    |-- Post WQE to SQ --------->|                          |
-    |   (ibv_post_send)          |                          |
-    |                            |                          |
-    |                            |-- Process WQE ---------->|
-    |                            |   (Generate packets)     |
-    |                            |                          |
-    |                            |<-- Network Response -----|
-    |                            |   (ACK, Data, etc.)      |
-    |                            |                          |
-    |                            |-- Generate CQE --------->|
-    |                            |   (Completion)           |
-    |                            |                          |
-    |<-- Poll CQ ----------------|                          |
-    |   (ibv_poll_cq)            |                          |
-    |                            |                          |
+Operation Latency Breakdown:
+────────────────────────────
+SEND Operation (64 bytes):
+  ├─ Application Post:     0.1-0.5 μs
+  ├─ Hardware Processing:  0.2-1.0 μs
+  ├─ Network Transmission: 1.0-10 μs (depends on distance)
+  ├─ Remote Processing:    0.2-1.0 μs
+  ├─ ACK Generation:       0.1-0.5 μs
+  ├─ ACK Transmission:     1.0-10 μs
+  ├─ Completion Generation: 0.1-0.5 μs
+  └─ Total Latency:        2.7-23.5 μs
+
+RDMA WRITE Operation (4KB):
+  ├─ Application Post:     0.1-0.5 μs
+  ├─ Hardware Processing:  0.5-2.0 μs
+  ├─ Network Transmission: 1.0-10 μs
+  ├─ Remote Processing:    0.5-2.0 μs
+  ├─ ACK Generation:       0.1-0.5 μs
+  ├─ ACK Transmission:     1.0-10 μs
+  ├─ Completion Generation: 0.1-0.5 μs
+  └─ Total Latency:        3.3-25.5 μs
+
+RDMA READ Operation (4KB):
+  ├─ Application Post:     0.1-0.5 μs
+  ├─ Hardware Processing:  0.2-1.0 μs
+  ├─ Request Transmission: 1.0-10 μs
+  ├─ Remote Processing:    0.5-2.0 μs
+  ├─ Response Generation:  0.5-2.0 μs
+  ├─ Response Transmission: 1.0-10 μs
+  ├─ Completion Generation: 0.1-0.5 μs
+  └─ Total Latency:        4.4-26.0 μs
+
+Throughput Flow:
+───────────────
+High-Throughput Scenario (1M operations/sec):
+  ├─ WQE Posting Rate:     1M WQEs/sec
+  ├─ Packet Generation:    1M packets/sec
+  ├─ Network Bandwidth:    10-100 Gbps
+  ├─ Completion Rate:      1M CQEs/sec
+  └─ Application Polling:  1M polls/sec
+
+Memory Bandwidth Flow:
+─────────────────────
+RDMA WRITE (100 Gbps):
+  ├─ Local Memory Read:    100 Gbps
+  ├─ Network Transmission: 100 Gbps
+  ├─ Remote Memory Write:  100 Gbps
+  └─ Total Bandwidth:      100 Gbps
+
+RDMA READ (100 Gbps):
+  ├─ Request Generation:   1 Gbps
+  ├─ Remote Memory Read:   100 Gbps
+  ├─ Response Transmission: 100 Gbps
+  ├─ Local Memory Write:   100 Gbps
+  └─ Total Bandwidth:      100 Gbps
+
+Error Handling Flow:
+───────────────────
+Error Detection:
+  ├─ WQE Validation Error: Immediate (0.1 μs)
+  ├─ Network Error:        Timeout (1-100 ms)
+  ├─ Remote Error:         ACK/NAK (2-25 μs)
+  └─ Completion Error:     CQE generation (0.1 μs)
+
+Error Recovery:
+  ├─ Retry Logic:          Application level
+  ├─ Queue Reset:          Hardware level
+  ├─ Connection Reset:     QP level
+  └─ Reconnection:         Application level
 
 Work Queue Components:
 =====================
