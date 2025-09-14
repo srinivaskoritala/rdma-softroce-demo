@@ -1,0 +1,674 @@
+==========================================
+SoftRoCE (Software RDMA) Demonstration
+==========================================
+
+1. Checking System Information
+==============================
+[0;34m[INFO][0m Kernel version: 6.1.0-39-cloud-amd64
+[0;34m[INFO][0m OS: Debian GNU/Linux 12 (bookworm)
+[0;34m[INFO][0m Architecture: x86_64
+
+2. Checking RDMA Software Stack
+===============================
+[0;34m[INFO][0m Checking for RDMA core utilities...
+[0;32m[SUCCESS][0m RDMA performance tools are available
+Available tools:
+  - /usr/bin/ib_atomic_bw
+  - /usr/bin/ib_atomic_lat
+  - /usr/bin/ib_read_bw
+  - /usr/bin/ib_read_lat
+  - /usr/bin/ib_send_bw
+  - /usr/bin/ib_send_lat
+  - /usr/bin/ib_write_bw
+  - /usr/bin/ib_write_lat
+[0;32m[SUCCESS][0m RDMA diagnostic tools are available
+
+3. Checking for RDMA Kernel Modules
+===================================
+[0;34m[INFO][0m Checking for SoftRoCE kernel modules...
+[1;33m[WARNING][0m SoftRoCE (rxe) module not loaded
+[0;34m[INFO][0m In a real setup, you would run: sudo modprobe rxe
+[1;33m[WARNING][0m RDMA core modules not loaded
+
+4. Checking for RDMA Devices
+============================
+[0;34m[INFO][0m Checking for InfiniBand/RDMA devices...
+[0;32m[SUCCESS][0m RDMA device directory exists
+total 0
+drwxr-xr-x  2 root root 0 Sep 14 10:00 .
+drwxr-xr-x 36 root root 0 Sep 14 09:52 ..
+
+5. SoftRoCE Configuration (Simulated)
+=====================================
+[0;34m[INFO][0m Simulating SoftRoCE configuration steps...
+Step 1: Load SoftRoCE kernel modules
+  sudo modprobe rxe
+  sudo modprobe rdma_rxe
+Step 2: Add network interface to SoftRoCE
+  sudo rdma link add rxe0 type rxe netdev eth0
+Step 3: Verify SoftRoCE device
+  ibv_devices
+  ibstat
+
+6. RDMA Performance Testing (Simulated)
+=======================================
+[0;34m[INFO][0m Simulating RDMA performance tests...
+Available RDMA performance tools:
+  - ib_write_bw: Write bandwidth test
+  - ib_read_bw: Read bandwidth test
+  - ib_send_bw: Send bandwidth test
+  - ib_write_lat: Write latency test
+  - ib_read_lat: Read latency test
+  - ib_send_lat: Send latency test
+
+Example usage (requires two machines with RDMA):
+  Server: ib_write_bw -d rxe0 -s 4K -n 1000
+  Client: ib_write_bw -d rxe0 -s 4K -n 1000 <server_ip>
+
+7. SoftRoCE Benefits Demonstration
+==================================
+[0;34m[INFO][0m SoftRoCE provides the following benefits:
+  ✓ Zero-copy data transfers
+  ✓ Kernel bypass for low latency
+  ✓ High bandwidth utilization
+  ✓ CPU offloading for network operations
+  ✓ Compatible with existing RDMA applications
+  ✓ No special hardware required
+
+8. Real-World SoftRoCE Setup Commands
+=====================================
+[0;34m[INFO][0m Complete SoftRoCE setup commands for a real system:
+
+# Install required packages
+sudo apt update
+sudo apt install -y rdma-core infiniband-diags perftest
+
+# Load kernel modules
+sudo modprobe rxe
+sudo modprobe rdma_rxe
+
+# Add network interface to SoftRoCE
+sudo rdma link add rxe0 type rxe netdev eth0
+
+# Verify setup
+ibv_devices
+ibstat
+
+# Test performance
+ib_write_bw -d rxe0
+
+9. Performance Comparison
+=========================
+[0;34m[INFO][0m Typical performance characteristics:
+  Traditional TCP/IP:
+    - Latency: 10-50 μs
+    - Bandwidth: Limited by CPU
+    - CPU Usage: High
+
+  SoftRoCE:
+    - Latency: 5-20 μs
+    - Bandwidth: Near line rate
+    - CPU Usage: Low
+
+10. Troubleshooting Tips
+========================
+[0;34m[INFO][0m Common SoftRoCE troubleshooting steps:
+  1. Check kernel module loading: lsmod | grep rxe
+  2. Verify device creation: ibv_devices
+  3. Check network interface: ip link show
+  4. Verify RDMA link: rdma link show
+  5. Test connectivity: ibping
+
+==========================================
+SoftRoCE Demonstration Complete
+==========================================
+[0;32m[SUCCESS][0m This demonstration showed SoftRoCE concepts and setup procedures
+[0;34m[INFO][0m For actual SoftRoCE functionality, you need:
+  - A physical machine (not cloud instance)
+  - Kernel with RDMA support
+  - Network interface suitable for RDMA
+  - Two machines for performance testing
+==========================================
+Advanced RDMA/SoftRoCE Technical Demo
+==========================================
+
+[0;36m1. RDMA Software Stack Analysis[0m
+==================================================
+[0;34m[INFO][0m Checking RDMA library versions and capabilities...
+[0;32m[SUCCESS][0m libibverbs library found
+  Version: 1.14.44
+[0;32m[SUCCESS][0m librdmacm library found
+  Version: 1.3.44
+
+[0;36m2. RDMA Performance Tools Analysis[0m
+==================================================
+[0;34m[INFO][0m Analyzing available RDMA performance testing tools...
+[0;32m[SUCCESS][0m ib_write_bw is available
+  Purpose: RDMA write bandwidth test
+  Location: /usr/bin/ib_write_bw
+[0;32m[SUCCESS][0m ib_read_bw is available
+  Purpose: RDMA read bandwidth test
+  Location: /usr/bin/ib_read_bw
+[0;32m[SUCCESS][0m ib_send_bw is available
+  Purpose: RDMA send bandwidth test
+  Location: /usr/bin/ib_send_bw
+[0;32m[SUCCESS][0m ib_write_lat is available
+  Purpose: RDMA write latency test
+  Location: /usr/bin/ib_write_lat
+[0;32m[SUCCESS][0m ib_read_lat is available
+  Purpose: RDMA write latency test
+  Location: /usr/bin/ib_read_lat
+[0;32m[SUCCESS][0m ib_send_lat is available
+  Purpose: RDMA send latency test
+  Location: /usr/bin/ib_send_lat
+[0;32m[SUCCESS][0m ib_atomic_bw is available
+  Purpose: 
+  Location: /usr/bin/ib_atomic_bw
+[0;32m[SUCCESS][0m ib_atomic_lat is available
+  Purpose: 
+  Location: /usr/bin/ib_atomic_lat
+
+[0;36m3. RDMA Transport Types[0m
+==================================================
+[0;34m[INFO][0m SoftRoCE supports multiple RDMA transport types:
+  RC (Reliable Connection):
+    - Guaranteed delivery and ordering
+    - Used for: Critical data transfers
+    - Example: ib_write_bw -t RC
+  UC (Unreliable Connection):
+    - No delivery guarantees
+    - Used for: High-performance streaming
+    - Example: ib_write_bw -t UC
+  UD (Unreliable Datagram):
+    - Datagram-based, no connection
+    - Used for: Multicast, discovery
+    - Example: ib_send_bw -t UD
+  XRC (eXtended Reliable Connection):
+    - Shared receive queues
+    - Used for: Scalable applications
+    - Example: ib_write_bw -t XRC
+
+[0;36m4. RDMA Operation Types[0m
+==================================================
+[0;34m[INFO][0m SoftRoCE supports various RDMA operations:
+  Send/Receive Operations:
+    - ib_send_bw: Send bandwidth test
+    - ib_send_lat: Send latency test
+    - Used for: Message passing, RPC
+  RDMA Write Operations:
+    - ib_write_bw: Write bandwidth test
+    - ib_write_lat: Write latency test
+    - Used for: Bulk data transfer, zero-copy
+  RDMA Read Operations:
+    - ib_read_bw: Read bandwidth test
+    - ib_read_lat: Read latency test
+    - Used for: Remote memory access
+  Atomic Operations:
+    - ib_atomic_bw: Atomic bandwidth test
+    - ib_atomic_lat: Atomic latency test
+    - Used for: Synchronization, counters
+
+[0;36m5. SoftRoCE Configuration Simulation[0m
+==================================================
+[0;34m[INFO][0m Simulating complete SoftRoCE setup process...
+Step 1: Check system prerequisites
+  - Kernel version: 6.1.0-39-cloud-amd64
+  - RDMA modules available: 2 modules
+  - Network interfaces: 2
+
+Step 2: Load SoftRoCE kernel modules (simulated)
+  sudo modprobe rxe                    # SoftRoCE core module
+  sudo modprobe rdma_rxe              # RDMA transport
+  sudo modprobe ib_core               # InfiniBand core
+  sudo modprobe ib_uverbs             # User verbs interface
+
+Step 3: Create SoftRoCE device (simulated)
+  sudo rdma link add rxe0 type rxe netdev eth0
+  sudo rdma link set rxe0 state ACTIVE
+
+Step 4: Verify SoftRoCE device (simulated)
+  ibv_devices                          # List RDMA devices
+  ibstat rxe0                          # Device statistics
+  ibv_devinfo -d rxe0                 # Device information
+
+[0;36m6. Performance Testing Scenarios[0m
+==================================================
+[0;34m[INFO][0m Simulating various RDMA performance test scenarios...
+Scenario 1: Bandwidth Testing
+  Server: ib_write_bw -d rxe0 -s 4K -n 1000 -t RC
+  Client: ib_write_bw -d rxe0 -s 4K -n 1000 -t RC <server_ip>
+  Expected: ~10-40 Gbps (depending on hardware)
+
+Scenario 2: Latency Testing
+  Server: ib_write_lat -d rxe0 -s 64 -n 1000 -t RC
+  Client: ib_write_lat -d rxe0 -s 64 -n 1000 -t RC <server_ip>
+  Expected: ~1-5 μs (depending on hardware)
+
+Scenario 3: Message Rate Testing
+  Server: ib_send_bw -d rxe0 -s 64 -n 10000 -t RC
+  Client: ib_send_bw -d rxe0 -s 64 -n 10000 -t RC <server_ip>
+  Expected: ~1-10M messages/sec
+
+Scenario 4: Memory Registration Testing
+  ibv_rc_pingpong -d rxe0 -s 1M -n 1000
+  Tests memory registration overhead
+
+[0;36m7. SoftRoCE vs Hardware RDMA Comparison[0m
+==================================================
+[0;34m[INFO][0m Performance characteristics comparison:
+Hardware RDMA (Mellanox ConnectX-6):
+  - Latency: 0.5-1.0 μs
+  - Bandwidth: 200-400 Gbps
+  - CPU Usage: < 1%
+  - Memory: Hardware offload
+
+SoftRoCE (Software implementation):
+  - Latency: 2-10 μs
+  - Bandwidth: 10-40 Gbps
+  - CPU Usage: 10-30%
+  - Memory: Software implementation
+
+Traditional TCP/IP:
+  - Latency: 10-50 μs
+  - Bandwidth: 1-10 Gbps
+  - CPU Usage: 50-80%
+  - Memory: Kernel buffers
+
+[0;36m8. RDMA Application Development[0m
+==================================================
+[0;34m[INFO][0m Key concepts for RDMA application development:
+Memory Management:
+  - Memory Registration: ibv_reg_mr()
+  - Memory Deregistration: ibv_dereg_mr()
+  - Memory Regions: Contiguous virtual memory
+
+Queue Pairs:
+  - Send Queue: Outgoing operations
+  - Receive Queue: Incoming operations
+  - Completion Queue: Operation completion
+
+Work Requests:
+  - Send Work Request: ibv_post_send()
+  - Receive Work Request: ibv_post_recv()
+  - Completion Polling: ibv_poll_cq()
+
+[0;36m9. SoftRoCE Use Cases[0m
+==================================================
+[0;34m[INFO][0m Common applications for SoftRoCE:
+High-Performance Computing:
+  - MPI implementations (OpenMPI, MPICH)
+  - Parallel file systems (Lustre, GPFS)
+  - Scientific computing frameworks
+
+Storage Systems:
+  - NVMe over Fabrics (NVMe-oF)
+  - Distributed storage systems
+  - Database clustering
+
+Machine Learning:
+  - Distributed training
+  - Parameter server architectures
+  - Gradient synchronization
+
+Cloud Computing:
+  - Container networking
+  - Microservices communication
+  - Serverless computing
+
+[0;36m10. Troubleshooting and Optimization[0m
+==================================================
+[0;34m[INFO][0m Common SoftRoCE issues and solutions:
+Performance Issues:
+  - Check CPU affinity: taskset -c 0-3 ib_write_bw
+  - Verify NUMA locality: numactl --cpunodebind=0
+  - Monitor CPU usage: htop, perf top
+
+Connectivity Issues:
+  - Check network interface: ip link show
+  - Verify RDMA link: rdma link show
+  - Test basic connectivity: ping, ibping
+
+Configuration Issues:
+  - Check kernel modules: lsmod | grep rxe
+  - Verify device creation: ibv_devices
+  - Check system logs: dmesg | grep -i rdma
+
+[0;36m11. Advanced SoftRoCE Features[0m
+==================================================
+[0;34m[INFO][0m Advanced SoftRoCE capabilities:
+Multi-Queue Support:
+  - Multiple queue pairs per device
+  - Load balancing across queues
+  - NUMA-aware queue placement
+
+Memory Management:
+  - Huge pages support
+  - Memory pinning
+  - Zero-copy operations
+
+Network Features:
+  - Jumbo frames support
+  - Flow control
+  - Congestion control
+
+[0;36m12. Monitoring and Debugging[0m
+==================================================
+[0;34m[INFO][0m Tools for monitoring SoftRoCE performance:
+Performance Monitoring:
+  - ibv_devinfo: Device information
+  - ibstat: Device statistics
+  - perf: CPU performance analysis
+
+Network Monitoring:
+  - ethtool: Network interface statistics
+  - netstat: Network connections
+  - ss: Socket statistics
+
+System Monitoring:
+  - htop: Process monitoring
+  - iostat: I/O statistics
+  - vmstat: Virtual memory statistics
+
+[0;36mDemo Complete[0m
+==================================================
+[0;32m[SUCCESS][0m SoftRoCE technical demonstration completed successfully!
+[0;34m[INFO][0m This demo showed:
+  ✓ RDMA software stack analysis
+  ✓ Performance testing tools
+  ✓ Transport and operation types
+  ✓ Configuration procedures
+  ✓ Performance characteristics
+  ✓ Application development concepts
+  ✓ Use cases and troubleshooting
+
+[1;33m[WARNING][0m Note: Actual SoftRoCE functionality requires:
+  - Physical hardware (not cloud instance)
+  - Kernel with RDMA support
+  - Two machines for testing
+  - Proper network configuration
+==========================================
+RDMA Tools Demonstration
+==========================================
+
+[0;36m1. Available RDMA Performance Tools[0m
+==================================================
+[0;34m[INFO][0m Listing all available RDMA testing tools...
+[0;32m[SUCCESS][0m ib_write_bw
+  Description: RDMA write bandwidth test
+  Location: /usr/bin/ib_write_bw
+  Usage: ib_write_bw [options]
+
+[0;32m[SUCCESS][0m ib_read_bw
+  Description: RDMA read bandwidth test
+  Location: /usr/bin/ib_read_bw
+  Usage: ib_read_bw [options]
+
+[0;32m[SUCCESS][0m ib_send_bw
+  Description: RDMA send bandwidth test
+  Location: /usr/bin/ib_send_bw
+  Usage: ib_send_bw [options]
+
+[0;32m[SUCCESS][0m ib_write_lat
+  Description: RDMA write latency test
+  Location: /usr/bin/ib_write_lat
+  Usage: ib_write_lat [options]
+
+[0;32m[SUCCESS][0m ib_read_lat
+  Description: RDMA read latency test
+  Location: /usr/bin/ib_read_lat
+  Usage: ib_read_lat [options]
+
+[0;32m[SUCCESS][0m ib_send_lat
+  Description: RDMA send latency test
+  Location: /usr/bin/ib_send_lat
+  Usage: ib_send_lat [options]
+
+[0;32m[SUCCESS][0m ib_atomic_bw
+  Description: RDMA atomic bandwidth test
+  Location: /usr/bin/ib_atomic_bw
+  Usage: ib_atomic_bw [options]
+
+[0;32m[SUCCESS][0m ib_atomic_lat
+  Description: RDMA atomic latency test
+  Location: /usr/bin/ib_atomic_lat
+  Usage: ib_atomic_lat [options]
+
+[0;36m2. RDMA Diagnostic Tools[0m
+==================================================
+[0;34m[INFO][0m Listing RDMA diagnostic and management tools...
+[1;33m[WARNING][0m ibstat not found
+[1;33m[WARNING][0m ibstatus not found
+[1;33m[WARNING][0m ibv_devices not found
+[1;33m[WARNING][0m ibv_devinfo not found
+[1;33m[WARNING][0m ibping not found
+[1;33m[WARNING][0m ibdiagnet not found
+[1;33m[WARNING][0m ibnetdiscover not found
+[1;33m[WARNING][0m iblinkinfo not found
+[0;36m3. RDMA Performance Test Examples[0m
+==================================================
+[0;34m[INFO][0m Showing example usage of RDMA performance tools...
+Bandwidth Tests:
+  # Write bandwidth test (4KB messages, 1000 iterations)
+  ib_write_bw -d rxe0 -s 4K -n 1000
+
+  # Read bandwidth test (1MB messages, 100 iterations)
+  ib_read_bw -d rxe0 -s 1M -n 100
+
+  # Send bandwidth test (64B messages, 10000 iterations)
+  ib_send_bw -d rxe0 -s 64 -n 10000
+
+Latency Tests:
+  # Write latency test (64B messages, 1000 iterations)
+  ib_write_lat -d rxe0 -s 64 -n 1000
+
+  # Read latency test (1KB messages, 1000 iterations)
+  ib_read_lat -d rxe0 -s 1K -n 1000
+
+  # Send latency test (32B messages, 1000 iterations)
+  ib_send_lat -d rxe0 -s 32 -n 1000
+
+Atomic Tests:
+  # Atomic bandwidth test (8B operations, 1000 iterations)
+  ib_atomic_bw -d rxe0 -s 8 -n 1000
+
+  # Atomic latency test (8B operations, 1000 iterations)
+  ib_atomic_lat -d rxe0 -s 8 -n 1000
+
+[0;36m4. RDMA Transport Types[0m
+==================================================
+[0;34m[INFO][0m Available RDMA transport types and their usage...
+RC (Reliable Connection):
+  - Guaranteed delivery and ordering
+  - Best for: Critical data transfers
+  - Usage: ib_write_bw -t RC
+
+UC (Unreliable Connection):
+  - No delivery guarantees, but maintains ordering
+  - Best for: High-performance streaming
+  - Usage: ib_write_bw -t UC
+
+UD (Unreliable Datagram):
+  - Datagram-based, no connection state
+  - Best for: Multicast, discovery protocols
+  - Usage: ib_send_bw -t UD
+
+XRC (eXtended Reliable Connection):
+  - Shared receive queues for scalability
+  - Best for: Large-scale applications
+  - Usage: ib_write_bw -t XRC
+
+[0;36m5. RDMA Test Parameters[0m
+==================================================
+[0;34m[INFO][0m Common parameters for RDMA performance tests...
+Device Selection:
+  -d <device>     : Specify RDMA device (e.g., rxe0, mlx5_0)
+  -i <port>       : Specify port number (default: 1)
+
+Message Parameters:
+  -s <size>       : Message size (e.g., 64, 1K, 4K, 1M)
+  -n <iterations> : Number of iterations
+  -t <transport>  : Transport type (RC, UC, UD, XRC)
+
+Performance Tuning:
+  -q <qps>        : Queue pairs per server
+  -c <connections>: Number of connections
+  -p <port>       : Port number for server
+  -x <threads>    : Number of threads
+
+Advanced Options:
+  -R              : Use RDMA read instead of write
+  -a              : Use atomic operations
+  -b              : Use bidirectional test
+  -e              : Use event-driven mode
+
+[0;36m6. SoftRoCE Setup Commands[0m
+==================================================
+[0;34m[INFO][0m Complete SoftRoCE setup and testing workflow...
+Step 1: Install RDMA software
+  sudo apt update
+  sudo apt install -y rdma-core infiniband-diags perftest
+
+Step 2: Load SoftRoCE kernel modules
+  sudo modprobe rxe
+  sudo modprobe rdma_rxe
+  sudo modprobe ib_core
+  sudo modprobe ib_uverbs
+
+Step 3: Create SoftRoCE device
+  sudo rdma link add rxe0 type rxe netdev eth0
+  sudo rdma link set rxe0 state ACTIVE
+
+Step 4: Verify SoftRoCE setup
+  ibv_devices                    # List RDMA devices
+  ibstat rxe0                    # Device status
+  ibv_devinfo -d rxe0           # Device information
+
+Step 5: Test SoftRoCE performance
+  # Server side
+  ib_write_bw -d rxe0 -s 4K -n 1000
+
+  # Client side
+  ib_write_bw -d rxe0 -s 4K -n 1000 <server_ip>
+
+[0;36m7. Performance Benchmarking[0m
+==================================================
+[0;34m[INFO][0m Example performance benchmarking scenarios...
+Scenario 1: Basic Bandwidth Test
+  Server: ib_write_bw -d rxe0 -s 4K -n 1000 -t RC
+  Client: ib_write_bw -d rxe0 -s 4K -n 1000 -t RC <server_ip>
+  Expected: 10-40 Gbps (depending on hardware)
+
+Scenario 2: Latency Test
+  Server: ib_write_lat -d rxe0 -s 64 -n 1000 -t RC
+  Client: ib_write_lat -d rxe0 -s 64 -n 1000 -t RC <server_ip>
+  Expected: 1-5 μs (depending on hardware)
+
+Scenario 3: Message Rate Test
+  Server: ib_send_bw -d rxe0 -s 64 -n 10000 -t RC
+  Client: ib_send_bw -d rxe0 -s 64 -n 10000 -t RC <server_ip>
+  Expected: 1-10M messages/sec
+
+Scenario 4: Multi-threaded Test
+  Server: ib_write_bw -d rxe0 -s 4K -n 1000 -x 4
+  Client: ib_write_bw -d rxe0 -s 4K -n 1000 -x 4 <server_ip>
+  Expected: Higher throughput with multiple threads
+
+[0;36m8. Troubleshooting Commands[0m
+==================================================
+[0;34m[INFO][0m Common troubleshooting commands for RDMA/SoftRoCE...
+Check RDMA devices:
+  ibv_devices                    # List available devices
+  ibstat                         # Show device status
+  ibv_devinfo -d rxe0           # Device details
+
+Check kernel modules:
+  lsmod | grep rxe               # Check SoftRoCE modules
+  lsmod | grep rdma              # Check RDMA modules
+  modinfo rxe                    # Module information
+
+Check network configuration:
+  ip link show                   # Network interfaces
+  rdma link show                 # RDMA links
+  ethtool -i eth0                # Interface information
+
+Check system logs:
+  dmesg | grep -i rdma           # RDMA-related messages
+  journalctl -u rdma             # RDMA service logs
+  cat /var/log/syslog | grep rdma # System log RDMA messages
+
+Performance monitoring:
+  htop                           # CPU usage
+  iostat -x 1                    # I/O statistics
+  netstat -i                     # Network statistics
+
+[0;36m9. SoftRoCE vs Hardware RDMA[0m
+==================================================
+[0;34m[INFO][0m Comparison between SoftRoCE and hardware RDMA...
+SoftRoCE (Software RDMA):
+  ✓ No special hardware required
+  ✓ Works with standard Ethernet
+  ✓ Good for development and testing
+  ✓ Lower performance than hardware
+  ✓ Higher CPU usage
+
+Hardware RDMA (Mellanox, etc.):
+  ✓ Hardware offload
+  ✓ Lower latency
+  ✓ Higher bandwidth
+  ✓ Lower CPU usage
+  ✗ Requires special hardware
+  ✗ More expensive
+
+[0;36m10. Use Cases and Applications[0m
+==================================================
+[0;34m[INFO][0m Common applications for RDMA/SoftRoCE...
+High-Performance Computing:
+  - MPI (Message Passing Interface)
+  - OpenMPI, MPICH implementations
+  - Parallel file systems (Lustre, GPFS)
+  - Scientific computing frameworks
+
+Storage Systems:
+  - NVMe over Fabrics (NVMe-oF)
+  - Distributed storage systems
+  - Database clustering
+  - Object storage systems
+
+Machine Learning:
+  - Distributed training
+  - Parameter server architectures
+  - Gradient synchronization
+  - Model parallelism
+
+Cloud Computing:
+  - Container networking
+  - Microservices communication
+  - Serverless computing
+  - Edge computing
+
+[0;36mDemo Complete[0m
+==================================================
+[0;32m[SUCCESS][0m RDMA tools demonstration completed successfully!
+[0;34m[INFO][0m This demo showed:
+  ✓ Available RDMA performance tools
+  ✓ Diagnostic and management tools
+  ✓ Example usage and parameters
+  ✓ Transport types and options
+  ✓ Setup and configuration
+  ✓ Performance benchmarking
+  ✓ Troubleshooting commands
+  ✓ Use cases and applications
+
+[1;33m[WARNING][0m Note: Actual RDMA functionality requires:
+  - RDMA hardware or SoftRoCE setup
+  - Two machines for performance testing
+  - Proper network configuration
+  - Kernel with RDMA support
+==========================================
+Simple RDMA Application Example
+==========================================
+Initializing RDMA context...
+No RDMA devices available
+Failed to initialize RDMA context
+This is expected in a cloud environment without RDMA hardware
+In a real setup with SoftRoCE, this would work properly

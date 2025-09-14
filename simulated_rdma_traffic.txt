@@ -1,0 +1,100 @@
+# Simulated RDMA Traffic Capture
+# This shows what RDMA traffic would look like in a real environment
+
+# RDMA Write Operation (4KB data transfer)
+10:04:56.000001 IP 192.168.1.10.18515 > 192.168.1.20.18515: RoCE v2, length 4148
+    InfiniBand: Local Route Header (8 bytes)
+      Version: 0, Service Level: 0, Destination LID: 0x0001
+      Packet Length: 4148, Source LID: 0x0002
+    InfiniBand: Global Route Header (40 bytes)
+      Version: 0, Traffic Class: 0, Flow Label: 0x000000
+      Payload Length: 4100, Next Header: 0x1B, Hop Limit: 64
+      Source GID: 192.168.1.10, Destination GID: 192.168.1.20
+    InfiniBand: Base Transport Header (12 bytes)
+      Opcode: RDMA Write (0x08), Solicited Event: 0, Migrated: 0
+      Pad Count: 0, Transport Header Version: 0, Partition Key: 0x1234
+      Destination Queue Pair: 0x0001, Packet Sequence Number: 0x00000001
+      Packet Serial Number: 0x00000001
+    InfiniBand: RDMA Extended Transport Header (16 bytes)
+      Virtual Address: 0x7f8b40000000, Remote Key: 0x5678
+      DMA Length: 4096, Reserved: 0x0000
+    Data: 4096 bytes of application data
+
+# RDMA Read Request
+10:04:56.000002 IP 192.168.1.10.18515 > 192.168.1.20.18515: RoCE v2, length 68
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+      Opcode: RDMA Read Request (0x08)
+    InfiniBand: RDMA Extended Transport Header (16 bytes)
+      Virtual Address: 0x7f8b40001000, Remote Key: 0x9ABC
+      DMA Length: 1024, Reserved: 0x0000
+
+# RDMA Read Response
+10:04:56.000003 IP 192.168.1.20.18515 > 192.168.1.10.18515: RoCE v2, length 1084
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+      Opcode: RDMA Read Response (0x09)
+    InfiniBand: RDMA Extended Transport Header (16 bytes)
+      Virtual Address: 0x7f8b40001000, Remote Key: 0x9ABC
+      DMA Length: 1024, Reserved: 0x0000
+    Data: 1024 bytes of read data
+
+# Send Operation (Message Passing)
+10:04:56.000004 IP 192.168.1.10.18515 > 192.168.1.20.18515: RoCE v2, length 100
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+      Opcode: Send (0x04)
+    InfiniBand: Data Extended Transport Header (8 bytes)
+      Queue Key: 0x1234, Reserved: 0x0000
+    Data: 64 bytes of message data
+
+# Atomic Compare and Swap
+10:04:56.000005 IP 192.168.1.10.18515 > 192.168.1.20.18515: RoCE v2, length 68
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+      Opcode: Atomic Compare and Swap (0x0F)
+    InfiniBand: Atomic Extended Transport Header (16 bytes)
+      Virtual Address: 0x7f8b40002000, Remote Key: 0xDEF0
+      Compare Add: 0x0000000000000000, Swap: 0x0000000000000001
+
+# Atomic Response
+10:04:56.000006 IP 192.168.1.20.18515 > 192.168.1.10.18515: RoCE v2, length 76
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+      Opcode: Atomic Response (0x10)
+    InfiniBand: Atomic Extended Transport Header (16 bytes)
+      Virtual Address: 0x7f8b40002000, Remote Key: 0xDEF0
+      Compare Add: 0x0000000000000000, Swap: 0x0000000000000001
+    Data: 8 bytes of atomic result
+
+# Queue Pair State Change
+10:04:56.000007 IP 192.168.1.10.18515 > 192.168.1.20.18515: RoCE v2, length 68
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+      Opcode: Send (0x04)
+    InfiniBand: Data Extended Transport Header (8 bytes)
+    Data: 16 bytes of QP state change notification
+
+# Memory Registration
+10:04:56.000008 IP 192.168.1.10.18515 > 192.168.1.20.18515: RoCE v2, length 100
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+      Opcode: Send (0x04)
+    InfiniBand: Data Extended Transport Header (8 bytes)
+    Data: 64 bytes of memory region information
+
+# Completion Notification
+10:04:56.000009 IP 192.168.1.20.18515 > 192.168.1.10.18515: RoCE v2, length 68
+    InfiniBand: Local Route Header (8 bytes)
+    InfiniBand: Global Route Header (40 bytes)
+    InfiniBand: Base Transport Header (12 bytes)
+      Opcode: Send (0x04)
+    InfiniBand: Data Extended Transport Header (8 bytes)
+    Data: 16 bytes of completion notification

@@ -1,0 +1,130 @@
+RDMA Traffic Visualization
+==========================
+
+1. RDMA Write Operation Flow
+   Client                    Server
+   -----                    ------
+   |                       |
+   |-- RDMA Write (4KB) -->|
+   |   | Ethernet Header   |
+   |   | IB Header         |
+   |   | BTH (Write)       |
+   |   | RETH (VA, Key)    |
+   |   | Data (4KB)        |
+   |                       |
+   |<-- Completion -------|
+   |   | Ethernet Header   |
+   |   | IB Header         |
+   |   | BTH (Ack)         |
+   |                       |
+
+2. RDMA Read Operation Flow
+   Client                    Server
+   -----                    ------
+   |                       |
+   |-- Read Request ------>|
+   |   | Ethernet Header   |
+   |   | IB Header         |
+   |   | BTH (Read Req)    |
+   |   | RETH (VA, Key)    |
+   |                       |
+   |<-- Read Response -----|
+   |   | Ethernet Header   |
+   |   | IB Header         |
+   |   | BTH (Read Resp)   |
+   |   | RETH (VA, Key)    |
+   |   | Data (1KB)        |
+   |                       |
+
+3. Send/Receive Operation Flow
+   Client                    Server
+   -----                    ------
+   |                       |
+   |-- Send Message ------>|
+   |   | Ethernet Header   |
+   |   | IB Header         |
+   |   | BTH (Send)        |
+   |   | DETH (Queue Key)  |
+   |   | Message Data      |
+   |                       |
+   |<-- Receive Complete --|
+   |   | Ethernet Header   |
+   |   | IB Header         |
+   |   | BTH (Ack)         |
+   |                       |
+
+4. Atomic Operation Flow
+   Client                    Server
+   -----                    ------
+   |                       |
+   |-- Atomic C&S -------->|
+   |   | Ethernet Header   |
+   |   | IB Header         |
+   |   | BTH (Atomic)      |
+   |   | AETH (VA, Key)    |
+   |   | Compare/Swap      |
+   |                       |
+   |<-- Atomic Response ---|
+   |   | Ethernet Header   |
+   |   | IB Header         |
+   |   | BTH (Atomic Resp) |
+   |   | AETH (VA, Key)    |
+   |   | Result (8 bytes)  |
+   |                       |
+
+5. RDMA Packet Structure
+   +------------------+------------------+------------------+------------------+
+   |   Ethernet       |   InfiniBand     |   Transport      |   Payload        |
+   |   Header         |   Header         |   Header         |   Data           |
+   |   (14 bytes)     |   (40 bytes)     |   (12-16 bytes)  |   (Variable)     |
+   +------------------+------------------+------------------+------------------+
+   | Dest MAC (6)     | LRH (8)          | BTH (12)         | Application      |
+   | Src MAC (6)      | GRH (40)         | DETH/RETH/AETH   | Data             |
+   | EtherType (2)    |                  | (8-16 bytes)     | (0-2GB)          |
+   | 0x8915 (RoCE)    |                  |                  |                  |
+   +------------------+------------------+------------------+------------------+
+
+6. RDMA Traffic Patterns
+   High-Performance Computing (MPI):
+   |-- Bulk Transfer -->|-- Sync -->|-- Compute -->|-- Bulk Transfer -->|
+   |    RDMA Write      |  Atomic   |   Local      |    RDMA Write      |
+   |    High BW         |  Low Lat  |   Processing |    High BW         |
+   
+   Storage Systems (NVMe-oF):
+   |-- Command -->|-- Data Transfer -->|-- Status -->|-- Command -->|
+   |   Send/Recv  |    RDMA Write      |   Atomic    |   Send/Recv  |
+   |   Low Lat    |    High BW         |   Low Lat   |   Low Lat    |
+   
+   Machine Learning (Distributed Training):
+   |-- Gradient -->|-- Sync -->|-- Update -->|-- Gradient -->|
+   |  RDMA Write   |  Atomic   |   Local     |  RDMA Write   |
+   |  High BW      |  Low Lat  |   Compute   |  High BW      |
+
+7. Performance Characteristics
+   Traditional TCP/IP:
+   Latency:  ████████████████████ 10-50 μs
+   Bandwidth: ████████ 1-10 Gbps
+   CPU Usage: ████████████████████████████████████████ 50-80%
+   
+   RDMA Hardware:
+   Latency:  ██ 1-5 μs
+   Bandwidth: ████████████████████████████████████████ 200-400 Gbps
+   CPU Usage: █ < 1%
+   
+   SoftRoCE:
+   Latency:  ████ 2-10 μs
+   Bandwidth: ████████████ 10-40 Gbps
+   CPU Usage: ████████ 10-30%
+
+8. RDMA Traffic Monitoring
+   Real-time Monitoring:
+   - Packet Rate: 1-10M packets/second
+   - Bandwidth: 10-400 Gbps
+   - Latency: 1-10 μs
+   - Error Rate: < 0.001%
+   
+   Key Metrics:
+   - Queue Pair State: RTS (Ready to Send)
+   - Memory Registration: Active regions
+   - Completion Queue: Pending completions
+   - Error Counters: Packet drops, timeouts
